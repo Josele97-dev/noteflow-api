@@ -28,7 +28,7 @@ CREATE TABLE checklists (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Items de cada tarea (se borran en cascada al borrar la tarea)
+-- Items de cada tarea 
 CREATE TABLE checklist_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   checklist_id UUID NOT NULL REFERENCES checklists(id) ON DELETE CASCADE,
@@ -36,7 +36,7 @@ CREATE TABLE checklist_items (
   is_completed BOOLEAN DEFAULT FALSE
 );
 
--- Tags de cada idea (se borran en cascada al borrar la idea)
+-- Tags de cada idea 
 CREATE TABLE idea_tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   idea_id UUID NOT NULL REFERENCES ideas(id) ON DELETE CASCADE,
