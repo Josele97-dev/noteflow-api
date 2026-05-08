@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
@@ -13,8 +12,9 @@ const updateChecklistSchema = z.object({
   })).optional(),
 });
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const [checklist] = await query(`
       SELECT c.*, 
         COALESCE(json_agg(json_build_object('id', ci.id, 'text', ci.text, 'isCompleted', ci.is_completed)) FILTER (WHERE ci.id IS NOT NULL), '[]') as items
@@ -22,7 +22,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       LEFT JOIN checklist_items ci ON c.id = ci.checklist_id
       WHERE c.id = $1
       GROUP BY c.id
-    `, [params.id]);
+    `, [id]);
     if (!checklist) return NextResponse.json({ error: 'No encontrada' }, { status: 404 });
     return NextResponse.json(checklist);
   } catch {
@@ -30,8 +30,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const result = updateChecklistSchema.safeParse(body);
     if (!result.success) {
@@ -41,16 +42,16 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
     const [checklist] = await query(
       'UPDATE checklists SET title = COALESCE($1, title), archived = COALESCE($2, archived), updated_at = NOW() WHERE id = $3 RETURNING *',
-      [title, archived, params.id]
+      [title, archived, id]
     );
     if (!checklist) return NextResponse.json({ error: 'No encontrada' }, { status: 404 });
 
     if (items !== undefined) {
-      await query('DELETE FROM checklist_items WHERE checklist_id = $1', [params.id]);
+      await query('DELETE FROM checklist_items WHERE checklist_id = $1', [id]);
       for (const item of items) {
         await query(
           'INSERT INTO checklist_items (checklist_id, text, is_completed) VALUES ($1, $2, $3)',
-          [params.id, item.text, item.isCompleted ?? false]
+          [id, item.text, item.isCompleted ?? false]
         );
       }
     }
@@ -62,7 +63,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       LEFT JOIN checklist_items ci ON c.id = ci.checklist_id
       WHERE c.id = $1
       GROUP BY c.id
-    `, [params.id]);
+    `, [id]);
 
     return NextResponse.json(checklistWithItems);
   } catch {
@@ -70,9 +71,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await query('DELETE FROM checklists WHERE id = $1', [params.id]);
+    const { id } = await params;
+    await query('DELETE FROM checklists WHERE id = $1', [id]);
     return new NextResponse(null, { status: 204 });
   } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
