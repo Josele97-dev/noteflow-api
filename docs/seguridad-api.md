@@ -39,3 +39,26 @@ En producción se configuran en el panel de Vercel como variables de entorno seg
 
 El archivo `.env.example` se sube a GitHub como plantilla con las claves vacías: DATABASE_URL=
 
+## JWT (JSON Web Token)
+
+JWT es un estándar para transmitir información de forma segura entre cliente y servidor. Se usa para autenticar al usuario sin necesidad de guardar sesiones en el servidor.
+
+### Cómo funciona
+
+1. El usuario hace login con email y contraseña
+2. El servidor verifica las credenciales y genera un token firmado con `JWT_SECRET`
+3. La app guarda el token con `expo-secure-store`
+4. En cada petición la app envía el token en el header `Authorization: Bearer <token>`
+5. El servidor verifica el token antes de procesar la petición
+
+### Estructura del token
+
+Un JWT tiene tres partes separadas por puntos: header.payload.signature
+
+- **Header** — algoritmo de firma
+- **Payload** — datos del usuario (id, email)
+- **Signature** — firma criptográfica con `JWT_SECRET`
+
+### Por qué expo-secure-store
+
+`expo-secure-store` cifra el token en el keychain del dispositivo. Es más seguro que `AsyncStorage` que guarda los datos en texto plano.

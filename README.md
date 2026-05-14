@@ -164,3 +164,52 @@ Para desplegar:
 1. Conecta el repo en Vercel
 2. Añade `DATABASE_URL`
 3. Deploy
+
+### Autenticación
+
+#### `POST /api/auth/register`
+Registra un usuario nuevo.
+
+**Body:**
+```json
+{
+  "email": "usuario@email.com",
+  "password": "123456"
+}
+```
+
+**Respuesta:** `201 Created`
+```json
+{
+  "id": "uuid",
+  "email": "usuario@email.com"
+}
+```
+
+#### `POST /api/auth/login`
+Inicia sesión y devuelve un token JWT.
+
+**Body:**
+```json
+{
+  "email": "usuario@email.com",
+  "password": "123456"
+}
+```
+
+**Respuesta:** `200 OK`
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "user": {
+    "id": "uuid",
+    "email": "usuario@email.com"
+  }
+}
+```
+
+## Autenticación
+
+Todos los endpoints de notas, ideas y tareas están protegidos. Hay que enviar el token en el header de cada petición: Authorization: Bearer <token>
+
+Sin token o con token inválido la API devuelve `401 No autorizado`.
